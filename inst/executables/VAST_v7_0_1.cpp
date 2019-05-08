@@ -828,6 +828,10 @@ Type objective_function<Type>::operator() ()
       Epsilon1_sct.col(t) = gmrf_by_category_nll(FieldConfig(1,0), Options_vec(7), VamConfig(2), n_s, n_c, logkappa1, Epsiloninput1_sft.col(t), Epsilonmean1_sf, L_epsilon1_z, gmrf_Q, jnll_comp(1), this);
     }
   }
+  // obtain field values at exact observation locations using barycentric interpolation
+  if(FieldConfig[0] != 0){
+    
+  }
 
   // Xi1_scp
   array<Type> Ximean1_sc(n_s, 1);
