@@ -498,6 +498,7 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(PredTF_i);          // vector indicating whether an observatino is predictive (1=used for model evaluation) or fitted (0=used for parameter estimation)
   DATA_MATRIX(a_xl);		     // Area for each "real" stratum(km^2) in each stratum
   DATA_ARRAY(X_xtp);		    // Covariate design matrix (strata x covariate)
+  DATA_ARRAY(X_itp);		    // Covariate design matrix (resolution = 1)
   DATA_MATRIX(Q_ik);        // Catchability matrix (observations x variable)
   DATA_IMATRIX(t_yz);        // Matrix for time-indices of calculating outputs (abundance index and "derived-quantity")
   DATA_MATRIX(Z_xm);        // Derived quantity matrix
@@ -1064,6 +1065,7 @@ Type objective_function<Type>::operator() ()
 
   vector<Type> zeta1_i = Q_ik * lambda1_k.matrix();
   vector<Type> zeta2_i = Q_ik * lambda2_k.matrix();
+  
   array<Type> eta1_xct(n_x, n_c, n_t);
   array<Type> eta2_xct(n_x, n_c, n_t);
   eta1_xct.setZero();
@@ -1075,6 +1077,20 @@ Type objective_function<Type>::operator() ()
     eta1_xct(x,c,t) += (gamma1_ctp(c,t,p) + Xi1_scp(x,c,p)) * X_xtp(x,t,p);
     eta2_xct(x,c,t) += (gamma2_ctp(c,t,p) + Xi2_scp(x,c,p)) * X_xtp(x,t,p);
   }}}}
+
+  if(Options_vec(9) == 1){
+    array<Type> eta1_ict(n_i, n_c, n_t);
+    array<Type> eta2_ict(n_i, n_c, n_t);
+    eta1_ict.setZero();
+    eta2_ict.setZero();
+    for(int i=0; i<n_i; i++){
+    for(int c=0; c<n_c; c++){
+    for(int t=0; t<n_t; t++){
+    for(int p=0; p<n_p; p++){
+      eta1_ict(i,c,t) += (gamma1_ctp(c,t,p) + Xi1_icp(i,c,p)) * X_itp(i,t,p);
+      eta2_ict(i,c,t) += (gamma2_ctp(c,t,p) + Xi2_icp(i,c,p)) * X_itp(i,t,p);
+    }}}}
+  }
 
   ////////////////////////
   // Likelihood for data
@@ -1117,12 +1133,23 @@ Type objective_function<Type>::operator() ()
       for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
         if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
         //if( !isNA(c_iz(i,zc)) ){
-          P1_iz(i,zc) = Omega1_sc(s_i(i),c_iz(i,zc)) + zeta1_i(i) + eta1_vc(v_i(i),c_iz(i,zc));
-          P2_iz(i,zc) = Omega2_sc(s_i(i),c_iz(i,zc)) + zeta2_i(i) + eta2_vc(v_i(i),c_iz(i,zc));
-          for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
-            if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){  // isNA doesn't seem to work for IMATRIX type
-              P1_iz(i,zc) += beta1_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon1_sct(s_i(i),c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio1_z(zt)) + eta1_xct(s_i(i),c_iz(i,zc),t_iz(i,zt)) + iota_ct(c_iz(i,zc),t_iz(i,zt));
-              P2_iz(i,zc) += beta2_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon2_sct(s_i(i),c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio2_z(zt)) + eta2_xct(s_i(i),c_iz(i,zc),t_iz(i,zt));
+          if( Options_vec(9) == 0 ){ // approximated predictor
+            P1_iz(i,zc) = Omega1_sc(s_i(i),c_iz(i,zc)) + zeta1_i(i) + eta1_vc(v_i(i),c_iz(i,zc));
+            P2_iz(i,zc) = Omega2_sc(s_i(i),c_iz(i,zc)) + zeta2_i(i) + eta2_vc(v_i(i),c_iz(i,zc));
+            for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
+              if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){  // isNA doesn't seem to work for IMATRIX type
+                P1_iz(i,zc) += beta1_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon1_sct(s_i(i),c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio1_z(zt)) + eta1_xct(s_i(i),c_iz(i,zc),t_iz(i,zt)) + iota_ct(c_iz(i,zc),t_iz(i,zt));
+                P2_iz(i,zc) += beta2_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon2_sct(s_i(i),c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio2_z(zt)) + eta2_xct(s_i(i),c_iz(i,zc),t_iz(i,zt));
+              }
+            }  
+          }else if( Options_vec(9) == 1 ){ // interpolated predictor
+            P1_iz(i,zc) = Omega1_ic(i,c_iz(i,zc)) + zeta1_i(i) + eta1_vc(v_i(i),c_iz(i,zc));
+            P2_iz(i,zc) = Omega2_ic(i,c_iz(i,zc)) + zeta2_i(i) + eta2_vc(v_i(i),c_iz(i,zc));
+            for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
+              if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){  // isNA doesn't seem to work for IMATRIX type
+                P1_iz(i,zc) += beta1_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon1_ict(i,c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio1_z(zt)) + eta1_ict(i,c_iz(i,zc),t_iz(i,zt)) + iota_ct(c_iz(i,zc),t_iz(i,zt));
+                P2_iz(i,zc) += beta2_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon2_ict(i,c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio2_z(zt)) + eta2_ict(i,c_iz(i,zc),t_iz(i,zt));
+              }
             }
           }
         }
