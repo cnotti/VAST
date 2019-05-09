@@ -453,6 +453,7 @@ Type objective_function<Type>::operator() ()
     // Slot 6 -- Breakpoint in CMP density function
     // Slot 7 -- Whether to use SPDE or 2D-AR1 hyper-distribution for spatial process: 0=SPDE; 1=2D-AR1; 2=Stream-network
     // Slot 8 -- Whether to use F_ct or ignore it for speedup
+    // Slot 9 -- Whether to use barycentric interpolation on GMRFs
   // Options_list.Options
     // Slot 0: Calculate SE for Index_xctl
     // Slot 1: Calculate SE for log(Index_xctl)
@@ -513,6 +514,9 @@ Type objective_function<Type>::operator() ()
   // Aniso objects
   DATA_STRUCT(spde_aniso,spde_aniso_t);
 
+  // Barycentric projection matrix
+  DATA_SPARSE_MATRIX(A_is);
+  
   // Sparse matrices for precision matrix of 2D AR1 process
   // Q = M0*(1+rho^2)^2 + M1*(1+rho^2)*(-rho) + M2*rho^2
   DATA_SPARSE_MATRIX(M0);
@@ -828,10 +832,6 @@ Type objective_function<Type>::operator() ()
       Epsilon1_sct.col(t) = gmrf_by_category_nll(FieldConfig(1,0), Options_vec(7), VamConfig(2), n_s, n_c, logkappa1, Epsiloninput1_sft.col(t), Epsilonmean1_sf, L_epsilon1_z, gmrf_Q, jnll_comp(1), this);
     }
   }
-  // obtain field values at exact observation locations using barycentric interpolation
-  if(FieldConfig[0] != 0){
-    
-  }
 
   // Xi1_scp
   array<Type> Ximean1_sc(n_s, 1);
@@ -923,6 +923,54 @@ Type objective_function<Type>::operator() ()
     }
   }}
 
+  // obtain field values at exact observation locations using barycentric interpolation
+  if(Options_vec(9) == 1){
+    // 1st component
+    array<Type> Omega1_ic(n_i,n_c);
+    array<Type> Epsilon1_ict(n_i,n_c,n_t);
+    array<Type> Xi1_icp(n_i,n_c,n_p);
+    Omega1_ic.setZero();
+    Epsilon1_ict.setZero();
+    Xi1_icp.setZero();
+    if(FieldConfig(0,0) != -1){
+      Omega1_ic = (A_is * Omega1_sc.matrix()).array();
+    }
+    if(FieldConfig(1,0) != -1){
+      for(int t=0; t<n_t; t++){
+        Epsilon1_ict.col(t) = (A_is * Epsilon1_sct.col(t).matrix()).array();
+      }
+    }
+    if( (Xconfig_zcp(0,c,p)==2) | (Xconfig_zcp(0,c,p)==3) ){  
+      for(int p=0; p<n_p; p++){
+        for(int c=0; c<n_c; c++){
+          Xi1_icp.col(p).col(c)  = (A_is * Xi1_scp.col(p).col(c).matrix()).array();
+        }
+      }
+    }
+    // 2nd component
+    array<Type> Omega2_ic(n_i,n_c);
+    array<Type> Epsilon2_ict(n_i,n_c,n_t);
+    array<Type> Xi2_icp(n_i,n_c,n_p);
+    Omega2_ic.setZero();
+    Epsilon2_ict.setZero();
+    Xi2_icp.setZero();
+    if(FieldConfig(0,1) != -1){
+      Omega2_ic = (A_is * Omega2_sc.matrix()).array();
+    }
+    if(FieldConfig(1,1) != -1){
+      for(int t=0; t<n_t; t++){
+        Epsilon2_ict.col(t) = (A_is * Epsilon2_sct.col(t).matrix()).array();
+      }
+    }
+    if( (Xconfig_zcp(1,c,p)==2) | (Xconfig_zcp(1,c,p)==3) ){  
+      for(int p=0; p<n_p; p++){
+        for(int c=0; c<n_c; c++){
+          Xi2_icp.col(p).col(c) = (A_is * Xi2_scp.col(p).col(c).matrix()).array();
+        }
+      }
+    }
+  }
+  
   // Normalization of GMRFs to normalize during outer-optimization step in R
   Type jnll_GMRF = jnll_comp(0) + jnll_comp(1) + jnll_comp(2) + jnll_comp(3);
   if( include_data == 0 ){
