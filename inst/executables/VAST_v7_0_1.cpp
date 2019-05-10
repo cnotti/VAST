@@ -1138,8 +1138,10 @@ Type objective_function<Type>::operator() ()
           if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
             for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
               if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){
-                eta1_izz(i,zc,zt) = (gamma1_ctp(c_iz(i,zc),t_iz(i,zt),p) + Xi1_izp(i,zc,p)) * X_izp(i,zt,p);
-                eta2_izz(i,zc,zt) = (gamma2_ctp(c_iz(i,zc),t_iz(i,zt),p) + Xi2_izp(i,zc,p)) * X_izp(i,zt,p);
+                for(int p=0; p<n_p; p++){
+                  eta1_izz(i,zc,zt) += (gamma1_ctp(c_iz(i,zc),t_iz(i,zt),p) + Xi1_izp(i,zc,p)) * X_izp(i,zt,p);
+                  eta2_izz(i,zc,zt) += (gamma2_ctp(c_iz(i,zc),t_iz(i,zt),p) + Xi2_izp(i,zc,p)) * X_izp(i,zt,p);
+                }
               }
             }
           }
