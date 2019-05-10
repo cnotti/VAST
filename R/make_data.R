@@ -138,9 +138,9 @@ function( b_i, a_i, c_iz, s_i, t_iz, e_i=c_iz[,1], v_i=rep(0,length(b_i)),
     }
   }
   if( is.null(X_izp) ){
-    X_izp = array(0, dim=c(n_i,ncol(t_iz),1))
+    X_izp = array(0, dim=c(n_i,ncol(tprime_iz),1))
   }else{
-    if( !is.array(X_izp) || !(all(dim(X_izp)[1:2]==c(n_i,ncol(t_iz)))) ){
+    if( !is.array(X_izp) || !(all(dim(X_izp)[1:2]==c(n_i,ncol(tprime_iz)))) ){
       stop("`X_izp` has wrong dimensions")
     }
   }
