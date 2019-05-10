@@ -925,14 +925,22 @@ Type objective_function<Type>::operator() ()
   }}
 
   // obtain field values at exact observation locations using barycentric interpolation
+  // 1st component
+  array<Type> Omega1_iz(n_i,c_iz.row(0).size());
+  array<Type> Epsilon1_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+  array<Type> Xi1_izp(n_i,c_iz.row(0).size(),n_p);
+  Omega1_iz.setZero();
+  Epsilon1_izz.setZero();
+  Xi1_izp.setZero();  
+  // 2nd component
+  array<Type> Omega2_iz(n_i,c_iz.row(0).size());
+  array<Type> Epsilon2_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+  array<Type> Xi2_izp(n_i,c_iz.row(0).size(),n_p);
+  Omega2_iz.setZero();
+  Epsilon2_izz.setZero();
+  Xi2_izp.setZero();  
   if(Options_vec(9) == 1){
     // 1st component
-    array<Type> Omega1_iz(n_i,c_iz.row(0).size());
-    array<Type> Epsilon1_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
-    array<Type> Xi1_izp(n_i,c_iz.row(0).size(),n_p);
-    Omega1_iz.setZero();
-    Epsilon1_izz.setZero();
-    Xi1_izp.setZero();
     if(FieldConfig(0,0) != -1){
       for(int i=0; i<n_i; i++){
         if( !isNA(b_i(i)) ){
@@ -971,12 +979,6 @@ Type objective_function<Type>::operator() ()
       }
     }
     // 2nd component
-    array<Type> Omega2_iz(n_i,c_iz.row(0).size());
-    array<Type> Epsilon2_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
-    array<Type> Xi2_izp(n_i,c_iz.row(0).size(),n_p);
-    Omega2_iz.setZero();
-    Epsilon2_izz.setZero();
-    Xi2_izp.setZero();
     if(FieldConfig(0,1) != -1){
       for(int i=0; i<n_i; i++){
         if( !isNA(b_i(i)) ){
@@ -1124,11 +1126,11 @@ Type objective_function<Type>::operator() ()
     eta2_xct(x,c,t) += (gamma2_ctp(c,t,p) + Xi2_scp(x,c,p)) * X_xtp(x,t,p);
   }}}}
 
+  array<Type> eta1_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+  array<Type> eta2_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+  eta1_izz.setZero();
+  eta2_izz.setZero();  
   if(Options_vec(9) == 1){
-    array<Type> eta1_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
-    array<Type> eta2_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
-    eta1_izz.setZero();
-    eta2_izz.setZero();
     for(int i=0; i<n_i; i++){
       if( !isNA(b_i(i)) ){
         for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
