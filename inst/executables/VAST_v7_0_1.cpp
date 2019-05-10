@@ -498,7 +498,7 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(PredTF_i);          // vector indicating whether an observatino is predictive (1=used for model evaluation) or fitted (0=used for parameter estimation)
   DATA_MATRIX(a_xl);		     // Area for each "real" stratum(km^2) in each stratum
   DATA_ARRAY(X_xtp);		    // Covariate design matrix (strata x covariate)
-  DATA_ARRAY(X_itp);		    // Covariate design matrix (resolution = 1)
+  DATA_ARRAY(X_izp);		    // Covariate design matrix (resolution = 1). 
   DATA_MATRIX(Q_ik);        // Catchability matrix (observations x variable)
   DATA_IMATRIX(t_yz);        // Matrix for time-indices of calculating outputs (abundance index and "derived-quantity")
   DATA_MATRIX(Z_xm);        // Derived quantity matrix
@@ -927,46 +927,92 @@ Type objective_function<Type>::operator() ()
   // obtain field values at exact observation locations using barycentric interpolation
   if(Options_vec(9) == 1){
     // 1st component
-    array<Type> Omega1_ic(n_i,n_c);
-    array<Type> Epsilon1_ict(n_i,n_c,n_t);
-    array<Type> Xi1_icp(n_i,n_c,n_p);
-    Omega1_ic.setZero();
-    Epsilon1_ict.setZero();
-    Xi1_icp.setZero();
+    array<Type> Omega1_iz(n_i,c_iz.row(0).size());
+    array<Type> Epsilon1_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+    array<Type> Xi1_izp(n_i,c_iz.row(0).size(),n_p);
+    Omega1_iz.setZero();
+    Epsilon1_izz.setZero();
+    Xi1_izp.setZero();
     if(FieldConfig(0,0) != -1){
-      Omega1_ic = (A_is * Omega1_sc.matrix()).array();
-    }
-    if(FieldConfig(1,0) != -1){
-      for(int t=0; t<n_t; t++){
-        Epsilon1_ict.col(t) = (A_is * Epsilon1_sct.col(t).matrix()).array();
+      for(int i=0; i<n_i; i++){
+        if( !isNA(b_i(i)) ){
+          for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+            if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+              Omega1_iz(i,zc) = (A_is.row(i) * Omega1_sc.col(c_iz(i,zc)).matrix()).array();  
+            }
+          }
+        }
       }
     }
-    if( (Xconfig_zcp(0,c,p)==2) | (Xconfig_zcp(0,c,p)==3) ){  
-      for(int p=0; p<n_p; p++){
-        for(int c=0; c<n_c; c++){
-          Xi1_icp.col(p).col(c)  = (A_is * Xi1_scp.col(p).col(c).matrix()).array();
+    if(FieldConfig(1,0) != -1){
+      for(int i=0; i<n_i; i++){
+        if( !isNA(b_i(i)) ){
+          for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+            if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+              for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
+                if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){
+                  Epsilon1_izz(i,zc,zt) = (A_is.row(i) * Epsilon1_sct.col(t_iz(i,zt)).col(c_iz(i,zc)).matrix()).array();
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    if( (Xconfig_zcp(0,c,p)==2) | (Xconfig_zcp(0,c,p)==3) ){
+      for(int i=0; i<n_i; i++){
+        for(int p=0; p<n_p; p++){
+          for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+            if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+              Xi1_izp(i,zc,p)  = (A_is.row(i) * Xi1_scp.col(p).col(c_iz(i,zc)).matrix()).array();
+            }
+          }
         }
       }
     }
     // 2nd component
-    array<Type> Omega2_ic(n_i,n_c);
-    array<Type> Epsilon2_ict(n_i,n_c,n_t);
-    array<Type> Xi2_icp(n_i,n_c,n_p);
-    Omega2_ic.setZero();
-    Epsilon2_ict.setZero();
-    Xi2_icp.setZero();
+    array<Type> Omega2_iz(n_i,c_iz.row(0).size());
+    array<Type> Epsilon2_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+    array<Type> Xi2_izp(n_i,c_iz.row(0).size(),n_p);
+    Omega2_iz.setZero();
+    Epsilon2_izz.setZero();
+    Xi2_izp.setZero();
     if(FieldConfig(0,1) != -1){
-      Omega2_ic = (A_is * Omega2_sc.matrix()).array();
+      for(int i=0; i<n_i; i++){
+        if( !isNA(b_i(i)) ){
+          for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+            if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+              Omega2_iz(i,zc) = (A_is.row(i) * Omega2_sc.col(c_iz(i,zc)).matrix()).array();  
+            }
+          }
+        }
+      }
     }
     if(FieldConfig(1,1) != -1){
-      for(int t=0; t<n_t; t++){
-        Epsilon2_ict.col(t) = (A_is * Epsilon2_sct.col(t).matrix()).array();
+      for(int i=0; i<n_i; i++){
+        if( !isNA(b_i(i)) ){  
+          for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+            if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+              for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
+                if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){
+                  Epsilon2_izz(i,zc,zt) = (A_is.row(i) * Epsilon2_sct.col(t_iz(i,zt)).col(c_iz(i,zc)).matrix()).array();
+                }
+              }
+            }
+          }
+        }
       }
     }
     if( (Xconfig_zcp(1,c,p)==2) | (Xconfig_zcp(1,c,p)==3) ){  
-      for(int p=0; p<n_p; p++){
-        for(int c=0; c<n_c; c++){
-          Xi2_icp.col(p).col(c) = (A_is * Xi2_scp.col(p).col(c).matrix()).array();
+      for(int i=0; i<n_i; i++){
+        if( !isNA(b_i(i)) ){
+          for(int p=0; p<n_p; p++){
+            for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+              if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+                Xi2_izp(i,zc,p) = (A_is.row(i) * Xi2_scp.col(p).col(c_iz(i,zc)).matrix()).array();
+              }
+            }
+          }
         }
       }
     }
@@ -1079,17 +1125,24 @@ Type objective_function<Type>::operator() ()
   }}}}
 
   if(Options_vec(9) == 1){
-    array<Type> eta1_ict(n_i, n_c, n_t);
-    array<Type> eta2_ict(n_i, n_c, n_t);
-    eta1_ict.setZero();
-    eta2_ict.setZero();
+    array<Type> eta1_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+    array<Type> eta2_izz(n_i,c_iz.row(0).size(),t_iz.row(0).size());
+    eta1_izz.setZero();
+    eta2_izz.setZero();
     for(int i=0; i<n_i; i++){
-    for(int c=0; c<n_c; c++){
-    for(int t=0; t<n_t; t++){
-    for(int p=0; p<n_p; p++){
-      eta1_ict(i,c,t) += (gamma1_ctp(c,t,p) + Xi1_icp(i,c,p)) * X_itp(i,t,p);
-      eta2_ict(i,c,t) += (gamma2_ctp(c,t,p) + Xi2_icp(i,c,p)) * X_itp(i,t,p);
-    }}}}
+      if( !isNA(b_i(i)) ){
+        for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+          if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+            for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
+              if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){
+                eta1_izz(i,zc,zt) = (gamma1_ctp(c_iz(i,zc),t_iz(i,zt),p) + Xi1_izp(i,zc,p)) * X_izp(i,zt,p);
+                eta2_izz(i,zc,zt) = (gamma2_ctp(c_iz(i,zc),t_iz(i,zt),p) + Xi2_izp(i,zc,p)) * X_izp(i,zt,p);
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   ////////////////////////
@@ -1143,12 +1196,12 @@ Type objective_function<Type>::operator() ()
               }
             }  
           }else if( Options_vec(9) == 1 ){ // interpolated predictor
-            P1_iz(i,zc) = Omega1_ic(i,c_iz(i,zc)) + zeta1_i(i) + eta1_vc(v_i(i),c_iz(i,zc));
-            P2_iz(i,zc) = Omega2_ic(i,c_iz(i,zc)) + zeta2_i(i) + eta2_vc(v_i(i),c_iz(i,zc));
+            P1_iz(i,zc) = Omega1_iz(i,zc) + zeta1_i(i) + eta1_vc(v_i(i),c_iz(i,zc));
+            P2_iz(i,zc) = Omega2_iz(i,zc) + zeta2_i(i) + eta2_vc(v_i(i),c_iz(i,zc));
             for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
               if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){  // isNA doesn't seem to work for IMATRIX type
-                P1_iz(i,zc) += beta1_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon1_ict(i,c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio1_z(zt)) + eta1_ict(i,c_iz(i,zc),t_iz(i,zt)) + iota_ct(c_iz(i,zc),t_iz(i,zt));
-                P2_iz(i,zc) += beta2_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon2_ict(i,c_iz(i,zc),t_iz(i,zt))*exp(log_sigmaratio2_z(zt)) + eta2_ict(i,c_iz(i,zc),t_iz(i,zt));
+                P1_iz(i,zc) += beta1_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon1_izz(i,zc,zt)*exp(log_sigmaratio1_z(zt)) + eta1_izz(i,zc,zt) + iota_ct(c_iz(i,zc),t_iz(i,zt));
+                P2_iz(i,zc) += beta2_tc(t_iz(i,zt),c_iz(i,zc)) + Epsilon2_izz(i,zc,zt)*exp(log_sigmaratio2_z(zt)) + eta2_izz(i,zc,zt);
               }
             }
           }
