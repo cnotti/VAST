@@ -946,7 +946,7 @@ Type objective_function<Type>::operator() ()
         if( !isNA(b_i(i)) ){
           for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
             if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
-              Omega1_iz(i,zc) = (A_is.row(i) * Omega1_sc.col(c_iz(i,zc)).matrix()).array();  
+              Omega1_iz(i,zc) = (A_is.row(i) * Omega1_sc.col(c_iz(i,zc)).matrix())(0,0);  
             }
           }
         }
@@ -959,7 +959,7 @@ Type objective_function<Type>::operator() ()
             if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
               for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
                 if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){
-                  Epsilon1_izz(i,zc,zt) = (A_is.row(i) * Epsilon1_sct.col(t_iz(i,zt)).col(c_iz(i,zc)).matrix()).array();
+                  Epsilon1_izz(i,zc,zt) = (A_is.row(i) * Epsilon1_sct.col(t_iz(i,zt)).col(c_iz(i,zc)).matrix())(0,0);
                 }
               }
             }
@@ -967,12 +967,12 @@ Type objective_function<Type>::operator() ()
         }
       }
     }
-    if( (Xconfig_zcp(0,c,p)==2) | (Xconfig_zcp(0,c,p)==3) ){
-      for(int i=0; i<n_i; i++){
-        for(int p=0; p<n_p; p++){
-          for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
-            if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
-              Xi1_izp(i,zc,p)  = (A_is.row(i) * Xi1_scp.col(p).col(c_iz(i,zc)).matrix()).array();
+    for(int i=0; i<n_i; i++){
+      for(int p=0; p<n_p; p++){
+        for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+          if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+            if( (Xconfig_zcp(0,c_iz(i,zc),p)==2) | (Xconfig_zcp(0,c_iz(i,zc),p)==3) ){
+              Xi1_izp(i,zc,p)  = (A_is.row(i) * Xi1_scp.col(p).col(c_iz(i,zc)).matrix())(0,0);
             }
           }
         }
@@ -984,7 +984,7 @@ Type objective_function<Type>::operator() ()
         if( !isNA(b_i(i)) ){
           for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
             if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
-              Omega2_iz(i,zc) = (A_is.row(i) * Omega2_sc.col(c_iz(i,zc)).matrix()).array();  
+              Omega2_iz(i,zc) = (A_is.row(i) * Omega2_sc.col(c_iz(i,zc)).matrix())(0,0);  
             }
           }
         }
@@ -997,7 +997,7 @@ Type objective_function<Type>::operator() ()
             if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
               for( int zt=0; zt<t_iz.row(0).size(); zt++ ){
                 if( (t_iz(i,zt)>=0) & (t_iz(i,zt)<n_t) ){
-                  Epsilon2_izz(i,zc,zt) = (A_is.row(i) * Epsilon2_sct.col(t_iz(i,zt)).col(c_iz(i,zc)).matrix()).array();
+                  Epsilon2_izz(i,zc,zt) = (A_is.row(i) * Epsilon2_sct.col(t_iz(i,zt)).col(c_iz(i,zc)).matrix())(0,0);
                 }
               }
             }
@@ -1005,13 +1005,14 @@ Type objective_function<Type>::operator() ()
         }
       }
     }
-    if( (Xconfig_zcp(1,c,p)==2) | (Xconfig_zcp(1,c,p)==3) ){  
-      for(int i=0; i<n_i; i++){
-        if( !isNA(b_i(i)) ){
-          for(int p=0; p<n_p; p++){
-            for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
-              if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
-                Xi2_izp(i,zc,p) = (A_is.row(i) * Xi2_scp.col(p).col(c_iz(i,zc)).matrix()).array();
+    
+    for(int i=0; i<n_i; i++){
+      if( !isNA(b_i(i)) ){
+        for(int p=0; p<n_p; p++){
+          for( int zc=0; zc<c_iz.row(0).size(); zc++ ){
+            if( (c_iz(i,zc)>=0) & (c_iz(i,zc)<n_c) ){
+              if( (Xconfig_zcp(1,c_iz(i,zc),p)==2) | (Xconfig_zcp(1,c_iz(i,zc),p)==3) ){  
+                Xi2_izp(i,zc,p) = (A_is.row(i) * Xi2_scp.col(p).col(c_iz(i,zc)).matrix())(0,0);
               }
             }
           }
